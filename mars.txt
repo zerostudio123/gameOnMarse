@@ -1,0 +1,215 @@
+using Microsoft.SqlServer.Server;
+using System;
+using System.Collections.Generic;
+using System.Data.SqlTypes;
+using System.Diagnostics;
+using System.Linq;
+using System.Net;
+using System.Net.Http.Headers;
+using System.Net.Mail;
+using System.Runtime.InteropServices;
+using System.Security.Authentication;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace ConsoleApp1
+{
+    internal class Program
+    {
+        static void Main(string[] args)
+        {
+            Console.InputEncoding = Encoding.Unicode;
+            Console.OutputEncoding = Encoding.Unicode;
+            int userChoiceOperstion;
+            int distation = 100;
+            int energ = 100;
+            int energInShop;
+            int sandStone;
+            bool shotrmeInDesereGoin = false; //магазин - после каждой бури шанс 20% найти мусор, мусор можно обменять на монетки, каждые 20 км есть магазинчик где можно монетки обменять на лучшие колеса,
+            bool shopIsWork = true;
+            int countForShop = 0;
+            bool protectionFromRobbers = false;
+            float money = 0;  //что ехать быстрее или на доп энергию(макс 5), также есть шанс всретить грабитеся который отнимет монетки, чтобы обезвредить грабителя нужно купить спец защиту 1 раз, уровень грабителя 
+            int trashChance;
+            int trashCount;
+            int trash = 0;
+            int speed = 1;
+            int speedPrice = 2;
+            int shotrmeInDesereEnding;
+            Random rand = new Random();
+            for (int i = 0; i < 100; i++)
+            {
+                shopIsWork = true;
+                if (energ > 0 && distation > 0)
+                {
+                    Console.WriteLine("Нажмите Enter чтобы сделать ход");
+                    Console.ReadKey();
+                    Console.WriteLine("Вы начали движение, за ход отнялась 1 энергия и вы проехали 1 километр");
+                    distation -= speed;
+                    if(trash > 2000)
+                    {
+                        energ -= 3;
+                    }
+                    else
+                    {
+                        energ -= 1;
+                    }                       
+                    countForShop++;
+                    if (countForShop % 5 == 0) //магазин
+                    {
+                        Console.WriteLine("Вы наткнулись на магазин, здесь вы можете: ");
+                        Console.WriteLine("1. обменять мусор на деньги");
+                        Console.WriteLine("2. купить новые колеса");
+                        Console.WriteLine("3. пополнить энергию");
+                        Console.WriteLine("4. купить защиту от грабителя, чтоб сохранить деньги, введите номер операции, 5 - выход из магазина: ");
+
+                        while (shopIsWork)
+                        {
+                            userChoiceOperstion = Convert.ToInt32(Console.ReadLine());
+                            switch (userChoiceOperstion)
+                            {
+                                case 1:
+                                    money += trash / 100.0f;
+                                    trash = 0;
+                                    Console.WriteLine($"у вас денег {money}, можете выбрать операцию что хотите делать: ");
+                                    break;
+                                case 2:
+                                    if (money > 0)
+                                    {
+                                        Console.WriteLine($"Стоимость улучшения колёс = {speedPrice}");
+                                        money -= speedPrice;
+                                        speed += 2;
+                                        speedPrice *= 2;
+                                        Console.WriteLine($"у вас денег {money}, можете выбрать операцию что хотите делать: ");
+                                    }
+                                    else
+                                    {
+                                        Console.WriteLine("Недостаточно денег");
+                                    }
+                                    break;
+                                case 3:
+                                    if (money > 0)
+                                    {
+                                        energInShop = Convert.ToInt32(Console.ReadLine());
+                                        if (energInShop > 0 && energInShop <= 5)
+                                        {
+                                            Console.WriteLine($"Вы полнились на {energInShop} энергии");
+                                            energ += energInShop;
+                                            money -= energInShop;
+                                            Console.WriteLine($"у вас денег {money}, можете выбрать операцию что хотите делать: ");
+                                        }
+                                        else
+                                        {
+                                            Console.WriteLine("Недопустимое количетсво энергии");
+                                        }
+                                    }
+                                    else
+                                    {
+                                        Console.WriteLine("Недостаточно денег");
+                                    }
+                                    break;
+                                case 4:
+                                    Console.WriteLine($"у вас денег {money}, можете выбрать операцию что хотите делать: ");
+                                    if (money > 0)
+                                    {
+                                        if (protectionFromRobbers == false)
+                                        {
+                                            Console.WriteLine("Вы решили купить защиту от бандита");
+                                            money -= 10;
+                                            protectionFromRobbers = true;
+                                        }
+                                        else
+                                        {
+                                            Console.WriteLine("Защита уже куплена");
+                                        }
+                                    }
+                                    else
+                                    {
+                                        Console.WriteLine("Недостаточно денег");
+                                    }
+                                    break;
+                                case 5:
+                                    shopIsWork = false;
+                                    break;
+                                default:
+                                    Console.WriteLine("Я такой команды не знаю!");
+                                    break;
+                            }
+
+                        }
+                    }
+                    Console.WriteLine($"Сатистика: {energ} = энергия/{distation} = километры/{money} = деньги");
+                    sandStone = rand.Next(0, 101);
+                    if (sandStone >= 16 && sandStone <= 20)
+                    {
+                        Console.WriteLine("Вы наткнулись на грабителя!");
+                        if (money > 5)
+                        {
+                            if (protectionFromRobbers == true)
+                            {
+                                Console.WriteLine("Но у вас есть защита! вы нечего не теряете, а бандит убегает в страхе");
+                            }
+                            else
+                            {
+                                Console.WriteLine("Вы не купили защиту, бандит украл 6 монет");
+                                money -= 6;
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine("У вас не оказалось денег, бандит дает вам деньги, он вам сочуствует");
+                            money += 3;
+                        }
+                    }
+                    if (sandStone >= 0 && sandStone <= 15) //буря
+                    {
+                        shotrmeInDesereGoin = true;
+                        Console.WriteLine("Буря началась!");
+                        while (shotrmeInDesereGoin && energ > 0)
+                        {
+                            Console.ReadKey();
+                            Console.WriteLine("-2 энергии");
+                            energ -= 2;
+                            shotrmeInDesereEnding = rand.Next(0, 5);
+
+                            if (shotrmeInDesereEnding == 4)
+                            {
+                                Console.WriteLine("Буря закончилась");
+                                shotrmeInDesereGoin = false;
+                                Console.WriteLine($"Во время бури была потрачена энергия, оставшаяся энергия: {energ}");
+                                trashChance = rand.Next(1, 5);
+                                if (trashChance == 4)
+                                {
+                                    Console.WriteLine("Вы нашли немного космического мусора");
+                                    trashCount = rand.Next(670, 1560);
+                                    trash += trashCount;
+                                    Console.WriteLine($"Вы получили {trashCount} мусора/общее количетсво мусора = {trash}");
+                                }
+                            }
+                            else
+                            {
+                                Console.WriteLine("Буря продолжается");
+                            }
+                        }
+                    }
+                }
+                else if (energ <= 0)
+                {
+                    Console.WriteLine("Энергии нет!");
+                    break;
+                }
+            }
+            if (energ <= 0)
+            {
+                Console.WriteLine("Поражение! Вы не доехали!");
+            }
+            else
+            {
+                Console.WriteLine("Победа! Вы доехали!");
+            }
+        }
+
+
+    }
+}
+
