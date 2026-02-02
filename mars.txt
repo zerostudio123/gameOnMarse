@@ -1,16 +1,26 @@
+using Microsoft.CSharp.RuntimeBinder;
 using Microsoft.SqlServer.Server;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.SqlTypes;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics.Eventing.Reader;
+using System.Dynamic;
 using System.Linq;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Mail;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Runtime.Remoting.Messaging;
 using System.Security.Authentication;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Linq;
+using System.Xml.Schema;
+using System.IO;
 
 namespace ConsoleApp1
 {
@@ -18,211 +28,206 @@ namespace ConsoleApp1
     {
         static void Main(string[] args)
         {
-            Console.InputEncoding = Encoding.Unicode;
-            Console.OutputEncoding = Encoding.Unicode;
-            float[] userInventory = new float[3] {100, 0, 0};
-            int userChoiceOperstion; 
-            int distation = 100;
-            int howEnergMinus = 1;
-            int energInShop;
-            int sandStone;
-            bool shotrmeInDesereGoin = false;
-            bool shopIsWork = true;
-            int countForShop = 0;
-            bool protectionFromRobbers = false;
-            
-            int trashChance;
-            int trashCount;
-            
-            int speed = 1;
-            int speedPrice = 2;
-            int shotrmeInDesereEnding;
+            ConsoleColor defaultColor = Console.ForegroundColor;
+            bool BanditProtection = false;
             Random rand = new Random();
-            for (int i = 0; i < 100; i++)
+            int HowLongIsItLeftToDrive = 100;
+            int maxState = 100;
+            int speed = 1, energ = 100;
+            double money = 0, rabish = 0;
+            while (HowLongIsItLeftToDrive-- > 0 && energ > 0)
             {
-                Console.ForegroundColor = ConsoleColor.White;
-                shopIsWork = true;
-                if (userInventory[0] > 0 && distation > 0)
+                Console.WriteLine("Введите enter: ");
+                healpBar(ConsoleColor.Blue, "Километров осталось: ", HowLongIsItLeftToDrive, maxState, 95, 0);
+                healpBar(ConsoleColor.Green, "Энергии осталось: ", energ, maxState, 95, 2);
+                healpBar(ConsoleColor.Yellow, "Монет: ", money, 95, 4);
+                healpBar(ConsoleColor.DarkYellow, "Мусора: ", rabish, 95, 5);
+                if (HowLongIsItLeftToDrive % 5 == 0)
                 {
-                    Console.WriteLine("Нажмите Enter чтобы сделать ход");
-                    Console.ReadKey();
-                    Console.ForegroundColor = ConsoleColor.DarkGray;
-                    Console.WriteLine($"Вы начали движение, за ход отнялась {howEnergMinus} энергия и вы проехали {speed} километр(ов)");
-                    distation -= speed;
-                    if (userInventory[2] > 2000)
-                    {
-                        howEnergMinus = 3;
-                        userInventory[0] -= howEnergMinus;
-                    }
-                    else
-                    {
-                        howEnergMinus = 1;
-                        userInventory[0] -= 1;
-                    }
-                    countForShop++;
-                    if (countForShop % 5 == 0) //магазин
-                    {
-                        Console.ForegroundColor = ConsoleColor.Cyan;
-                        Console.WriteLine($"Статистика: {userInventory[0]} = энергия/{distation} = километры/{userInventory[1]:F2} = деньги/{userInventory[2]} мусора");
-                        Console.WriteLine("Вы наткнулись на магазин, здесь вы можете:\n1. обменять мусор на деньги\n2. купить новые колеса\n3. пополнить энергию" +
-                            "\n4. купить защиту от грабителя, чтоб сохранить деньги, введите номер операции\n5. выход из магазина");
-                        while (shopIsWork)
-                        {
-                            Console.ForegroundColor = ConsoleColor.Red;
-                            userChoiceOperstion = Convert.ToInt32(Console.ReadLine());
-                            Console.ForegroundColor = ConsoleColor.Cyan;
-                            switch (userChoiceOperstion)
-                            {
-                                case 1:
-                                userInventory[1] += userInventory[2] / 100.0f;
-                                    userInventory[2] = 0;
-                                    Console.WriteLine($"у вас денег {userInventory[1]:F2}, введите номер операции: ");
-                                    break;
-                                case 2:
-                                    if (userInventory[1] >= speedPrice)
-                                    {
-                                        Console.WriteLine($"Стоимость улучшения колёс = {speedPrice}");
-                                        userInventory[1] -= speedPrice;
-                                        speed += 2;
-                                        speedPrice *= 2;
-                                        Console.WriteLine($"у вас денег {userInventory[1]:F2}, введите номер операции: ");
-                                    }
-                                    else
-                                    {
-                                        Console.WriteLine("Недостаточно денег");
-                                    }
-                                    break;
-                                case 3:
-                                    if (userInventory[1] > 0)
-                                    {
-                                        energInShop = Convert.ToInt32(Console.ReadLine());
-                                        if (energInShop > 0 && energInShop <= 5 && userInventory[1] >= energInShop)
-                                        {
-                                            Console.WriteLine($"Вы полнились на {energInShop} энергии");
-                                            userInventory[0] += energInShop;
-                                            userInventory[1] -= energInShop;
-                                            Console.WriteLine($"у вас денег {userInventory[1]:F2}, введите номер операции: ");
-                                        }
-                                        else
-                                        {
-                                            Console.WriteLine("Недопустимое количетсво энергии или денег");
-                                        }
-                                    }
-                                    else
-                                    {
-                                        Console.WriteLine("Недостаточно денег");
-                                    }
-                                    break;
-                                case 4:
-                                    Console.WriteLine($"у вас денег {userInventory[1]:F2}, можете выбрать операцию что хотите делать: ");
-                                    if (userInventory[1] >= 10)
-                                    {
-                                        if (protectionFromRobbers == false)
-                                        {
-                                            Console.WriteLine("Вы решили купить защиту от бандита");
-                                            userInventory[1] -= 10;
-                                            protectionFromRobbers = true;
-                                        }
-                                        else
-                                        {
-                                            Console.WriteLine("Защита уже куплена");
-                                        }
-                                    }
-                                    else
-                                    {
-                                        Console.WriteLine("Недостаточно денег");
-                                    }
-                                    break;
-                                case 5:
-                                    shopIsWork = false;
-                                    break;
-                                default:
-                                    Console.ForegroundColor = ConsoleColor.Red;
-                                    Console.WriteLine("Я такой команды не знаю!,введите номер операции");
-                                    break;
-                            }
-
-                        }
-                    }
-                    Console.WriteLine($"Статистика: {userInventory[0]} = энергия/{distation} = километры/{userInventory[1]:F2} = деньги");
-                    sandStone = rand.Next(0, 101);
-                    if (sandStone >= 16 && sandStone <= 20)
-                    {
-                        Console.ForegroundColor = ConsoleColor.DarkRed;
-                        Console.WriteLine("Вы наткнулись на грабителя!");
-                        if (userInventory[1] > 5)
-                        {
-                            if (protectionFromRobbers == true)
-                            {
-                                Console.WriteLine("Но у вас есть защита! вы нечего не теряете, а бандит убегает в страхе");
-                            }
-                            else
-                            {
-                                Console.WriteLine("Вы не купили защиту, бандит украл 6 монет");
-                                userInventory[1] -= 6;
-                            }
-                        }
-                        else
-                        {
-                            Console.WriteLine("У вас не оказалось денег, бандит дает вам деньги, он вам сочуствует и даёт монетки");
-                            userInventory[1] += 3;
-                        }
-                    }
-                    if (sandStone >= 0 && sandStone <= 15) //буря
-                    {
-                        shotrmeInDesereGoin = true;
-                        Console.ForegroundColor = ConsoleColor.Yellow;
-                        Console.WriteLine("Буря началась!");
-                        while (shotrmeInDesereGoin && userInventory[0] > 0)
-                        {
-                            Console.ReadKey();
-                            Console.WriteLine("-2 энергии");
-                            userInventory[0] -= 2;
-                            shotrmeInDesereEnding = rand.Next(0, 5);
-
-                            if (shotrmeInDesereEnding == 4)
-                            {
-                                Console.WriteLine("Буря закончилась");
-                                shotrmeInDesereGoin = false;
-                                Console.WriteLine($"Во время бури была потрачена энергия, оставшаяся энергия: {userInventory[0]}");
-                                trashChance = rand.Next(1, 5);
-                                if (trashChance == 4 || trashChance == 3)
-                                {
-                                    Console.WriteLine("Вы нашли немного космического мусора");
-                                    trashCount = rand.Next(670, 1560);
-                                    userInventory[2] += trashCount;
-                                    Console.ForegroundColor = ConsoleColor.DarkYellow;
-                                    Console.WriteLine($"Вы получили {trashCount} мусора/общее количетсво мусора = {userInventory[2]}");
-                                }
-                            }
-                            else
-                            {
-                                Console.WriteLine("Буря продолжается");
-                            }
-                        }
-
-                    }
+                    store(ref money, ref energ, ref rabish, ref speed, ref BanditProtection);
                 }
-                else if (userInventory[0] <= 0)
+                Console.ReadKey();
+                int changeBandoit = rand.Next(1, 7);
+                switch (changeBandoit)
                 {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine("Энергии нет!");
-                    break;
+                    case 1:
+                        banditTook(ref money, BanditProtection);
+                        break;
                 }
+                storm(ref energ, ref rabish);
+                Console.Clear();
             }
-            if (userInventory[0] <= 0)
+
+
+        }
+        static void banditTook(ref double money, bool protectedBandit)
+        {
+            ConsoleColor defaultColor = Console.ForegroundColor;
+            Console.WriteLine("Вы натыкаетесь на бандита!");
+            if (money < 6)
             {
+                money += 3;
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("Поражение! Вы не доехали!");
+                Console.WriteLine("У вас недостаточно денег, бандит вам сочувтсувует и даёт три монетки: ");
+                Console.ForegroundColor = defaultColor;
             }
             else
             {
-                Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine("Победа! Вы доехали!");
+                money -= 6;
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Бандит забирает у вас деньги: ");
+                Console.ForegroundColor = defaultColor;
+            }
+            Console.ReadKey();
+        }
+        static void healpBar(ConsoleColor color, string massage, double number, int LeftPosition, int downPositon)
+        {
+            ConsoleColor defaultColor = Console.ForegroundColor;
+            Console.ForegroundColor = color;
+            Console.SetCursorPosition(LeftPosition, downPositon);
+            Console.WriteLine(massage + number);
+            Console.ForegroundColor = defaultColor;
+            Console.SetCursorPosition(0, 0);
+        }
+        static void healpBar(ConsoleColor color, string massage, int state1, int stateMax, int LeftPosition, int downPositon)
+        {
+            ConsoleColor defaultColor = Console.ForegroundColor;
+            Console.ForegroundColor = color;
+            Console.SetCursorPosition(LeftPosition, downPositon);
+            Console.WriteLine(massage + state1);
+            healphbar(state1, stateMax, color, LeftPosition, downPositon + 1);
+            Console.ForegroundColor = defaultColor;
+            Console.SetCursorPosition(0, 0);
+
+        }
+        static void storm(ref int energ, ref double rabish)
+        {
+            ConsoleColor color = Console.ForegroundColor;
+            Random rand = new Random();
+            bool stromIsWork = true;
+            while (stromIsWork)
+            {
+                int strom = rand.Next(0, 3);
+                switch (strom)
+                {
+                    case 2:
+                        rabish += rand.Next(0, 600);
+                        stromIsWork = false;
+                        break;
+                    default:
+                        Console.ForegroundColor = ConsoleColor.DarkYellow;
+                        Console.WriteLine("Буря продолжается!");
+                        energ -= 2;
+                        Console.WriteLine("-2 энергии");
+                        Console.ForegroundColor = color;
+                        Console.ReadKey();
+                        break;
+                }
             }
         }
+        static void healphbar(int HowKm, int HowKMall, ConsoleColor color, int CursorPositionLeft, int CursorPositionDown)
+        {
+            ConsoleColor defaultColor = Console.BackgroundColor;
+            string bar = "";
+            for (int i = 0; i < HowKm; i += 4)
+            {
+                bar += " ";
+            }
+            Console.SetCursorPosition(CursorPositionLeft, CursorPositionDown);
+            Console.BackgroundColor = color;
 
+            Console.Write(bar);
+            bar = "";
+            Console.BackgroundColor = defaultColor;
+            for (int i = 0; i < HowKMall; i += 4)
+            {
+                bar += " ";
+            }
+            Console.Write(bar);
+        }
+        static int CheckingTheNumber(string massage)
+        {
+            int num = 0;
+            while (true)
+            {
+                Console.WriteLine(massage);
+                string input = Console.ReadLine();
+                if (int.TryParse(input, out int resul))
+                {
+                    num = resul;
+                    break;
+                }
+                Console.WriteLine("Вы ввели что-то нето!");
+            }
+            return num;
+        }
+        static void ConsoleWriteLine()
+        {
+            Console.WriteLine("1 - обменять мусор на деньги(курс 1 монета = 100 мусора)");
+            Console.WriteLine("2 - купить энергии(1 энергия - 1 монета)");
+            Console.WriteLine("3 - улучшить колеса");
+            Console.WriteLine("4 - купить защиту от бандита");
+            Console.WriteLine("5 - выход");
+        }
+        static void store(ref double money, ref int energ, ref double rebish, ref int speed, ref bool BanditProtection)
+        {
+            bool shopIsWork = true;
+            Console.WriteLine("Магазин: ");
+            ConsoleWriteLine();
+            while (shopIsWork)
+            {
+                int numOperstion = CheckingTheNumber("Введите номер операции: ");
+                switch (numOperstion)
+                {
+                    case 1:
+                        if (rebish > 0)
+                        {
+                            money += rebish / 100.0;
+                            rebish = 0;
+                        }
+                        Console.WriteLine($"У вас {money} монет и осталось 0 мусора");
+                        break;
+                    case 2:
+                        int howBuyEnerg = CheckingTheNumber("Сколько вы хотите купить энергии?: ");
+                        if (howBuyEnerg <= 5 || money >= howBuyEnerg)
+                        {
+                            money -= howBuyEnerg;
+                            energ += howBuyEnerg;
+                        }
+                        else
+                        {
+                            Console.WriteLine("максимум можно купить 5 энергии!");
+                        }
+                        break;
+                    case 3:
+                        if (money - speed * 2 >= 0)
+                        {
+                            money -= speed * 2;
+                            speed += 2;
+                        }
+                        else
+                        {
+                            Console.WriteLine("Недостаточно денег!");
+                        }
+                        break;
+                    case 4:
+                        if (!BanditProtection && money >= 15)
+                        {
+                            money -= 15;
+                            BanditProtection = true;
+                        }
+                        else
+                        {
+                            Console.WriteLine("Защита уже куплена!");
+                        }
+                        break;
+                    case 5:
+                        Console.WriteLine("Продолжаем движение");
+                        shopIsWork = false;
+                        break;
+                }
 
+            }
+        }
     }
 }
-
